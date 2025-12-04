@@ -66,7 +66,7 @@ class Command(BaseCommand):
             }
         )
         if created:
-            self.stdout.write(self.style.SUCCESS(f'✓ Created subfolder: {launch_2024_folder.get_full_path()}'))
+            self.stdout.write(self.style.SUCCESS(f'✓ Created subfolder: {launch_2024_folder.name}'))
         
         # Create more useful folders
         social_media_folder, created = MediaFolder.objects.get_or_create(
