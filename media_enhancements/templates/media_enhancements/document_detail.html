@@ -1,0 +1,151 @@
+{% extends "media_enhancements/base.html" %}
+{% load static %}
+
+{% block title %}{{ document.title }} - Document Details{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12 mb-3">
+        <a href="{% url 'media_enhancements:unified_dashboard' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="card-title">
+                    <i class="fas fa-file-alt"></i> {{ document.title }}
+                </h2>
+                
+                <div class="alert alert-light mt-3">
+                    <h5>Document Preview</h5>
+                    <p class="mb-0">
+                        <i class="fas fa-info-circle"></i> 
+                        This is a {{ document.file.name|slice:"-4:" }} file. 
+                        Click the download button below to view the full document.
+                    </p>
+                </div>
+                
+                <div class="mt-4">
+                    <a href="{{ document.file.url }}" class="btn btn-primary btn-lg" download>
+                        <i class="fas fa-download"></i> Download Document
+                    </a>
+                    <a href="{{ document.file.url }}" class="btn btn-success btn-lg" target="_blank">
+                        <i class="fas fa-external-link-alt"></i> Open in New Tab
+                    </a>
+                    <a href="/admin/documents/{{ document.id }}/" class="btn btn-warning btn-lg">
+                        <i class="fas fa-edit"></i> Edit
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- Document Information -->
+        <div class="card mb-3">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-info-circle"></i> Document Information</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tr>
+                        <th>Uploaded:</th>
+                        <td>{{ document.created_at|date:"M d, Y H:i" }}</td>
+                    </tr>
+                    <tr>
+                        <th>File Size:</th>
+                        <td>{{ document.file.size|filesizeformat }}</td>
+                    </tr>
+                    <tr>
+                        <th>File Type:</th>
+                        <td>{{ document.file.name|slice:"-4:" }}</td>
+                    </tr>
+                    {% if document.document_version %}
+                    <tr>
+                        <th>Version:</th>
+                        <td>{{ document.document_version }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if document.department %}
+                    <tr>
+                        <th>Department:</th>
+                        <td>{{ document.department }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if document.expiry_date %}
+                    <tr>
+                        <th>Expiry Date:</th>
+                        <td>
+                            {{ document.expiry_date|date:"M d, Y" }}
+                            {% if document.expiry_date < today %}
+                            <span class="badge bg-danger">Expired</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+        
+        <!-- Tags -->
+        {% if tags %}
+        <div class="card mb-3">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-hashtag"></i> Tags</h5>
+            </div>
+            <div class="card-body">
+                {% for tag in tags %}
+                <span class="badge bg-light text-dark me-1 mb-1">{{ tag.name }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Quick Actions -->
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-bolt"></i> Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-primary" onclick="copyToClipboard('{{ document.file.url }}')">
+                        <i class="fas fa-copy"></i> Copy URL
+                    </button>
+                    <button class="btn btn-outline-info" onclick="shareDocument()">
+                        <i class="fas fa-share-alt"></i> Share
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(function() {
+        alert('URL copied to clipboard!');
+    }, function(err) {
+        console.error('Could not copy text: ', err);
+    });
+}
+
+function shareDocument() {
+    if (navigator.share) {
+        navigator.share({
+            title: '{{ document.title }}',
+            url: '{{ document.file.url }}'
+        }).then(() => {
+            console.log('Thanks for sharing!');
+        }).catch(console.error);
+    } else {
+        alert('Share feature is not supported in your browser. Copy the URL instead.');
+    }
+}
+</script>
+{% endblock %}

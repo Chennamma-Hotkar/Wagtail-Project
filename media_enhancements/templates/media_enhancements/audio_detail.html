@@ -1,0 +1,151 @@
+{% extends "media_enhancements/base.html" %}
+{% load static %}
+
+{% block title %}{{ audio.title }} - Audio Details{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12 mb-3">
+        <a href="{% url 'media_enhancements:unified_dashboard' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="card-title">
+                    <i class="fas fa-music text-success"></i> {{ audio.title }}
+                </h2>
+                
+                <!-- Album Art -->
+                {% if audio.thumbnail %}
+                <div class="text-center mb-4">
+                    <img src="{{ audio.thumbnail.url }}" alt="{{ audio.title }}" 
+                         style="max-width: 300px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                </div>
+                {% endif %}
+                
+                <!-- Audio Player -->
+                <div class="mb-4">
+                    <audio controls style="width: 100%;">
+                        <source src="{{ audio.file.url }}" type="audio/mpeg">
+                        Your browser does not support the audio element.
+                    </audio>
+                </div>
+                
+                {% if audio.description %}
+                <div class="alert alert-info">
+                    <h5>Description</h5>
+                    <p>{{ audio.description }}</p>
+                </div>
+                {% endif %}
+                
+                <div class="mt-3">
+                    <a href="{{ audio.file.url }}" class="btn btn-primary" download>
+                        <i class="fas fa-download"></i> Download Audio
+                    </a>
+                    <a href="/admin/snippets/media_enhancements/audio/edit/{{ audio.id }}/" class="btn btn-warning">
+                        <i class="fas fa-edit"></i> Edit
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- Audio Information -->
+        <div class="card mb-3">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-info-circle"></i> Audio Information</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tr>
+                        <th>Uploaded:</th>
+                        <td>{{ audio.created_at|date:"M d, Y H:i" }}</td>
+                    </tr>
+                    <tr>
+                        <th>File Size:</th>
+                        <td>{{ audio.file.size|filesizeformat }}</td>
+                    </tr>
+                    {% if audio.duration %}
+                    <tr>
+                        <th>Duration:</th>
+                        <td>{{ audio.duration }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if audio.artist %}
+                    <tr>
+                        <th>Artist:</th>
+                        <td>{{ audio.artist }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if audio.album %}
+                    <tr>
+                        <th>Album:</th>
+                        <td>{{ audio.album }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if audio.genre %}
+                    <tr>
+                        <th>Genre:</th>
+                        <td>{{ audio.genre }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if audio.year %}
+                    <tr>
+                        <th>Year:</th>
+                        <td>{{ audio.year }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if audio.copyright_holder %}
+                    <tr>
+                        <th>Copyright:</th>
+                        <td>{{ audio.copyright_holder }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if audio.source_url %}
+                    <tr>
+                        <th>Source:</th>
+                        <td><a href="{{ audio.source_url }}" target="_blank">View Source</a></td>
+                    </tr>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+        
+        <!-- Categories -->
+        {% if categories %}
+        <div class="card mb-3">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-tags"></i> Categories</h5>
+            </div>
+            <div class="card-body">
+                {% for category in categories %}
+                <a href="{% url 'media_enhancements:unified_dashboard' %}?category={{ category.slug }}" class="badge bg-secondary me-1 mb-1">
+                    {{ category.name }}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Tags -->
+        {% if tags %}
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-hashtag"></i> Tags</h5>
+            </div>
+            <div class="card-body">
+                {% for tag in tags %}
+                <span class="badge bg-light text-dark me-1 mb-1">{{ tag.name }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,459 @@
+{% extends "media_enhancements/base.html" %}
+{% load static %}
+
+{% block title %}Image Editor - {{ image.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .editor-container {
+        display: grid;
+        grid-template-columns: 250px 1fr 300px;
+        gap: 20px;
+        height: calc(100vh - 200px);
+    }
+    
+    .editor-sidebar {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        overflow-y: auto;
+    }
+    
+    .editor-canvas {
+        background: #f5f5f5;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .editor-canvas img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+    }
+    
+    .editor-properties {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        overflow-y: auto;
+    }
+    
+    .tool-section {
+        margin-bottom: 25px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .tool-section:last-child {
+        border-bottom: none;
+    }
+    
+    .tool-section h5 {
+        margin-bottom: 15px;
+        color: #667eea;
+        font-weight: 600;
+    }
+    
+    .tool-btn {
+        width: 100%;
+        margin-bottom: 10px;
+        text-align: left;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .tool-btn i {
+        width: 20px;
+    }
+    
+    .aspect-ratio-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+    
+    .aspect-btn {
+        padding: 10px;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        background: white;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-align: center;
+    }
+    
+    .aspect-btn:hover {
+        border-color: #667eea;
+        background: #f8f9ff;
+    }
+    
+    .aspect-btn.active {
+        border-color: #667eea;
+        background: #667eea;
+        color: white;
+    }
+    
+    .slider-container {
+        margin: 15px 0;
+    }
+    
+    .slider-container label {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 5px;
+    }
+    
+    .slider-container input[type="range"] {
+        width: 100%;
+    }
+    
+    .action-buttons {
+        position: sticky;
+        bottom: 0;
+        background: white;
+        padding: 15px 0;
+        border-top: 2px solid #e9ecef;
+    }
+    
+    .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255,255,255,0.9);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+    
+    .loading-overlay.active {
+        display: flex;
+    }
+    
+    .spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #667eea;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+    <a href="{% url 'media_enhancements:image_detail' image.id %}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Image
+    </a>
+</div>
+
+<h2 class="mb-4">
+    <i class="fas fa-magic"></i> Image Editor: {{ image.title }}
+</h2>
+
+<div class="editor-container">
+    <!-- Left Sidebar - Tools -->
+    <div class="editor-sidebar">
+        <div class="tool-section">
+            <h5><i class="fas fa-crop"></i> Transform</h5>
+            <button class="btn btn-outline-primary tool-btn" onclick="rotateImage(90)">
+                <i class="fas fa-redo"></i> Rotate Right 90°
+            </button>
+            <button class="btn btn-outline-primary tool-btn" onclick="rotateImage(-90)">
+                <i class="fas fa-undo"></i> Rotate Left 90°
+            </button>
+            <button class="btn btn-outline-primary tool-btn" onclick="flipHorizontal()">
+                <i class="fas fa-arrows-alt-h"></i> Flip Horizontal
+            </button>
+            <button class="btn btn-outline-primary tool-btn" onclick="flipVertical()">
+                <i class="fas fa-arrows-alt-v"></i> Flip Vertical
+            </button>
+        </div>
+        
+        <div class="tool-section">
+            <h5><i class="fas fa-expand-arrows-alt"></i> Aspect Ratio</h5>
+            <div class="aspect-ratio-grid">
+                <button class="aspect-btn" onclick="cropToAspect('square')">
+                    <i class="fas fa-square"></i><br>Square<br>1:1
+                </button>
+                <button class="aspect-btn" onclick="cropToAspect('landscape')">
+                    <i class="fas fa-rectangle-landscape"></i><br>Landscape<br>16:9
+                </button>
+                <button class="aspect-btn" onclick="cropToAspect('portrait')">
+                    <i class="fas fa-rectangle-portrait"></i><br>Portrait<br>9:16
+                </button>
+                <button class="aspect-btn" onclick="cropToAspect('standard')">
+                    <i class="fas fa-tv"></i><br>Standard<br>4:3
+                </button>
+            </div>
+        </div>
+        
+        <div class="tool-section">
+            <h5><i class="fas fa-adjust"></i> Filters</h5>
+            <button class="btn btn-outline-secondary tool-btn" onclick="applyFilter('grayscale')">
+                <i class="fas fa-palette"></i> Grayscale
+            </button>
+            <button class="btn btn-outline-secondary tool-btn" onclick="applyFilter('sharpen')">
+                <i class="fas fa-star"></i> Sharpen
+            </button>
+            <button class="btn btn-outline-secondary tool-btn" onclick="applyFilter('blur')">
+                <i class="fas fa-circle"></i> Blur
+            </button>
+            <button class="btn btn-outline-secondary tool-btn" onclick="applyFilter('emboss')">
+                <i class="fas fa-mountain"></i> Emboss
+            </button>
+        </div>
+    </div>
+    
+    <!-- Center - Canvas -->
+    <div class="editor-canvas">
+        <img id="editorImage" src="{{ image.file.url }}" alt="{{ image.title }}">
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="spinner"></div>
+        </div>
+    </div>
+    
+    <!-- Right Sidebar - Properties -->
+    <div class="editor-properties">
+        <div class="tool-section">
+            <h5><i class="fas fa-info-circle"></i> Image Info</h5>
+            <p><strong>Size:</strong> {{ image.width }} × {{ image.height }}px</p>
+            <p><strong>File Size:</strong> {{ image.file.size|filesizeformat }}</p>
+        </div>
+        
+        <div class="tool-section">
+            <h5><i class="fas fa-compress-arrows-alt"></i> Resize</h5>
+            <div class="mb-3">
+                <label>Width (px)</label>
+                <input type="number" id="resizeWidth" class="form-control" value="{{ image.width }}">
+            </div>
+            <div class="mb-3">
+                <label>Height (px)</label>
+                <input type="number" id="resizeHeight" class="form-control" value="{{ image.height }}">
+            </div>
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="maintainAspect" checked>
+                <label class="form-check-label" for="maintainAspect">
+                    Maintain Aspect Ratio
+                </label>
+            </div>
+            <button class="btn btn-primary w-100" onclick="resizeImage()">
+                <i class="fas fa-compress"></i> Apply Resize
+            </button>
+        </div>
+        
+        <div class="tool-section">
+            <h5><i class="fas fa-copyright"></i> Watermark</h5>
+            <div class="mb-3">
+                <label>Text</label>
+                <input type="text" id="watermarkText" class="form-control" value="© Copyright">
+            </div>
+            <div class="mb-3">
+                <label>Position</label>
+                <select id="watermarkPosition" class="form-select">
+                    <option value="bottom-right">Bottom Right</option>
+                    <option value="bottom-left">Bottom Left</option>
+                    <option value="top-right">Top Right</option>
+                    <option value="top-left">Top Left</option>
+                    <option value="center">Center</option>
+                </select>
+            </div>
+            <div class="slider-container">
+                <label>
+                    <span>Opacity</span>
+                    <span id="opacityValue">128</span>
+                </label>
+                <input type="range" id="watermarkOpacity" min="0" max="255" value="128" 
+                       oninput="document.getElementById('opacityValue').textContent = this.value">
+            </div>
+            <button class="btn btn-primary w-100" onclick="addWatermark()">
+                <i class="fas fa-stamp"></i> Add Watermark
+            </button>
+        </div>
+        
+        <div class="tool-section">
+            <h5><i class="fas fa-file-export"></i> Convert Format</h5>
+            <select id="convertFormat" class="form-select mb-3">
+                <option value="JPEG">JPEG</option>
+                <option value="PNG">PNG</option>
+                <option value="WEBP">WebP</option>
+                <option value="GIF">GIF</option>
+            </select>
+            <div class="slider-container">
+                <label>
+                    <span>Quality</span>
+                    <span id="qualityValue">85</span>
+                </label>
+                <input type="range" id="compressionQuality" min="1" max="100" value="85" 
+                       oninput="document.getElementById('qualityValue').textContent = this.value">
+            </div>
+            <button class="btn btn-primary w-100" onclick="convertFormat()">
+                <i class="fas fa-exchange-alt"></i> Convert
+            </button>
+        </div>
+        
+        <div class="action-buttons">
+            <button class="btn btn-success w-100 mb-2" onclick="saveImage(false)">
+                <i class="fas fa-save"></i> Save Changes
+            </button>
+            <button class="btn btn-info w-100" onclick="saveImage(true)">
+                <i class="fas fa-copy"></i> Save as New
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const imageId = {{ image.id }};
+let currentOperation = null;
+let currentParams = {};
+
+function showLoading() {
+    document.getElementById('loadingOverlay').classList.add('active');
+}
+
+function hideLoading() {
+    document.getElementById('loadingOverlay').classList.remove('active');
+}
+
+async function applyEdit(operation, params, saveAsNew = false) {
+    showLoading();
+    
+    try {
+        const response = await fetch(`/media/editor/${imageId}/apply/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                operation: operation,
+                params: params,
+                save_as_new: saveAsNew
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert(data.message);
+            if (data.redirect_url) {
+                window.location.href = data.redirect_url;
+            } else {
+                location.reload();
+            }
+        } else {
+            alert('Error: ' + (data.error || 'Unknown error'));
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    } finally {
+        hideLoading();
+    }
+}
+
+function rotateImage(degrees) {
+    currentOperation = 'rotate';
+    currentParams = { degrees: degrees };
+}
+
+function flipHorizontal() {
+    currentOperation = 'flip_horizontal';
+    currentParams = {};
+}
+
+function flipVertical() {
+    currentOperation = 'flip_vertical';
+    currentParams = {};
+}
+
+function cropToAspect(aspectRatio) {
+    currentOperation = 'crop_aspect';
+    currentParams = { aspect_ratio: aspectRatio, position: 'center' };
+}
+
+function resizeImage() {
+    const width = parseInt(document.getElementById('resizeWidth').value);
+    const height = parseInt(document.getElementById('resizeHeight').value);
+    const maintainAspect = document.getElementById('maintainAspect').checked;
+    
+    currentOperation = 'resize';
+    currentParams = {
+        width: width,
+        height: height,
+        maintain_aspect: maintainAspect,
+        quality: 'high'
+    };
+}
+
+function addWatermark() {
+    const text = document.getElementById('watermarkText').value;
+    const position = document.getElementById('watermarkPosition').value;
+    const opacity = parseInt(document.getElementById('watermarkOpacity').value);
+    
+    currentOperation = 'watermark';
+    currentParams = {
+        text: text,
+        position: position,
+        opacity: opacity,
+        font_size: 36,
+        color: 'white'
+    };
+}
+
+function convertFormat() {
+    const format = document.getElementById('convertFormat').value;
+    const quality = parseInt(document.getElementById('compressionQuality').value);
+    
+    currentOperation = 'convert_format';
+    currentParams = {
+        format: format,
+        quality: quality
+    };
+}
+
+function applyFilter(filterName) {
+    currentOperation = 'apply_filter';
+    currentParams = { filter_name: filterName };
+}
+
+function saveImage(saveAsNew) {
+    if (!currentOperation) {
+        alert('Please select an operation first');
+        return;
+    }
+    
+    applyEdit(currentOperation, currentParams, saveAsNew);
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}
