@@ -8,6 +8,7 @@ from wagtail import urls as wagtail_urls
 from wagtail.documents import urls as wagtaildocs_urls
 
 from search import views as search_views
+from home import views as home_views
 
 urlpatterns = [
     path("django-admin/", admin.site.urls),
@@ -16,6 +17,7 @@ urlpatterns = [
     path("search/", search_views.search, name="search"),
     path("media/", include("media_enhancements.urls")),
     path("api/media/", include("media_enhancements.api_urls")),
+    path("create-admin/", home_views.create_admin_view, name="create_admin"),
 ]
 
 
