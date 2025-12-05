@@ -69,6 +69,9 @@ This guide will help you deploy your Wagtail Rich Media project to Render.
    DATABASE_URL=[paste Internal Database URL from step 1]
    WAGTAILADMIN_BASE_URL=https://your-app.onrender.com
    USE_S3=False
+   DJANGO_SUPERUSER_USERNAME=admin
+   DJANGO_SUPERUSER_EMAIL=admin@example.com
+   DJANGO_SUPERUSER_PASSWORD=[your-secure-password]
    ```
 
 4. **Deploy**
@@ -77,9 +80,18 @@ This guide will help you deploy your Wagtail Rich Media project to Render.
 
 ## Post-Deployment
 
-### Create a Superuser
+### Automatic Superuser Creation
 
-After your first deployment, you'll need to create an admin user:
+A superuser is automatically created during deployment using the environment variables:
+- **Username**: Set via `DJANGO_SUPERUSER_USERNAME` (default: admin)
+- **Email**: Set via `DJANGO_SUPERUSER_EMAIL` (default: admin@example.com)
+- **Password**: Set via `DJANGO_SUPERUSER_PASSWORD` (you must set this!)
+
+**Important**: Make sure to set a secure password in the `DJANGO_SUPERUSER_PASSWORD` environment variable before deployment.
+
+### Manual Superuser Creation (Optional)
+
+If you need to create additional admin users:
 
 1. Go to your web service in Render Dashboard
 2. Click "Shell" tab
