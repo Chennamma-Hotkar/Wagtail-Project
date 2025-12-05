@@ -537,7 +537,7 @@
 
 <!-- Media Files Header -->
 {% if media_items or subfolders %}
-<h5 class="mb-3"><i class="fas fa-file"></i> Media Files</h5>
+<h5 class="mb-3" id="media-files-section"><i class="fas fa-file"></i> Media Files</h5>
 {% endif %}
 
 <!-- Filters Section -->
@@ -853,8 +853,42 @@
 
 {% block extra_js %}
 <script>
-// Add move button to each media card
 document.addEventListener('DOMContentLoaded', function() {
+    // Add click handlers to stat cards
+    const statCards = document.querySelectorAll('.stat-card');
+    statCards.forEach(card => {
+        card.addEventListener('click', function(e) {
+            // Store scroll intent in sessionStorage
+            sessionStorage.setItem('scrollToMedia', 'true');
+        });
+    });
+    
+    // Check if we should scroll from stat card click
+    if (sessionStorage.getItem('scrollToMedia') === 'true') {
+        sessionStorage.removeItem('scrollToMedia');
+        
+        // Wait for page to fully load, then scroll
+        setTimeout(() => {
+            const mediaSection = document.getElementById('media-files-section');
+            if (mediaSection) {
+                mediaSection.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'start' 
+                });
+            } else {
+                // If no media section, try scrolling to filters
+                const filtersSection = document.querySelector('.filters-section');
+                if (filtersSection) {
+                    filtersSection.scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'start' 
+                    });
+                }
+            }
+        }, 400);
+    }
+    
+    // Add move button to each media card
     const mediaCards = document.querySelectorAll('.media-card');
     mediaCards.forEach(card => {
         const actionsDiv = card.querySelector('.media-actions');
@@ -866,8 +900,6 @@ document.addEventListener('DOMContentLoaded', function() {
             moveBtn.onclick = function(e) {
                 e.preventDefault();
                 e.stopPropagation();
-                // Show move modal
-                // This would need media type and ID from the card
             };
             actionsDiv.appendChild(moveBtn);
         }
