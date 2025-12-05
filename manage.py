@@ -19,22 +19,5 @@ def main():
 
 
 if __name__ == '__main__':
-    # main()
-    import os
-    from django.core.management import execute_from_command_line
-    try:
-        from django.contrib.auth import get_user_model
-        User = get_user_model()
-        if not User.objects.filter(username="admin").exists():
-            User.objects.create_superuser(
-                "admin",
-                "admin@gmail.com",
-                "Admin@123"
-            )
-            print("✅ Superuser created successfully")
-        else:
-            print("✅ Superuser already exists")
-    except Exception as e:
-        print("⚠️ Superuser creation skipped:", e)
-
-    execute_from_command_line(os.sys.argv)
+    main()
+    
