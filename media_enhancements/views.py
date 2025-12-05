@@ -58,12 +58,12 @@ def media_stats_api(request):
         ),
         'recent_uploads': {
             'images': list(
-                CustomImage.objects.order_by('-created_at')[:5].values(
+                CustomImage.objects.order_by('-created_at')[:].values(
                     'id', 'title', 'created_at'
                 )
             ),
             'documents': list(
-                CustomDocument.objects.order_by('-created_at')[:5].values(
+                CustomDocument.objects.order_by('-created_at')[:].values(
                     'id', 'title', 'created_at'
                 )
             ),
