@@ -11,6 +11,7 @@ dj-database-url
 django-storages[boto3]
 boto3
 whitenoise
+gunicorn  # WSGI server for production
 django-model-utils # Useful for model inheritance
 djangorestframework  # REST API support
 django-filter  # Filtering support for API
