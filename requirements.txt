@@ -3,8 +3,8 @@ Django==5.2.8
 wagtail==7.2.1
 
 # Database
-psycopg2-binary==2.9.11
-dj-database-url==3.0.1
+psycopg2-binary==2.9.10
+dj-database-url==2.3.0
 
 # Image Processing
 pillow==12.0.0
@@ -28,7 +28,7 @@ botocore==1.42.1
 s3transfer==0.16.0
 
 # Static Files
-whitenoise==6.11.0
+whitenoise==6.8.2
 
 # Production Server
 gunicorn==23.0.0
